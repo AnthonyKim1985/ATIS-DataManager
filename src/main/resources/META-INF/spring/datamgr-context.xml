@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd">
+
+    <!-- MessageCollectorDispatcher -->
+    <bean name="messageCollectorDispatcher" class="com.anthonykim.datamgr.dispatcher.MessageCollectorDispatcherImpl"/>
+    <bean name="sparkStreamingDispatcher" class="com.anthonykim.datamgr.dispatcher.SparkStreamingDispatcherImpl"/>
+
+    <!-- Collector -->
+    <bean name="messageCollector" scope="prototype" class="com.anthonykim.datamgr.collector.MessageCollectorImpl"/>
+
+    <!-- Spark Streaming -->
+    <bean name="sparkStreaming" scope="prototype" class="com.anthonykim.datamgr.spark.SparkStreamingImpl"/>
+
+    <!-- Distributor -->
+    <!--
+    <bean id="messageDistributionTask" scope="prototype"
+          class="com.anthonykim.datamgr.jobDistributionTask"/>
+    <bean name="messageDistributionJobBean" scope="prototype"
+          class="org.springframework.scheduling.quartz.JobDetailFactoryBean"
+          p:jobClass="com.anthonykim.datamgr.jobDistributionJobdurability="true">
+        <property name="jobDataAsMap">
+            <map>
+                <entry key="messageDistributionTask" value-ref="messageDistributionTask"/>
+                <entry key="applicationContextJobDataKey" value="applicationContext"/>
+                <entry key="messageCollector" value-ref="messageCollector"/>
+            </map>
+        </property>
+    </bean>
+    <bean id="cronTrigger" class="org.springframework.scheduling.quartz.CronTriggerFactoryBean"
+          p:jobDetail-ref="messageDistributionJobBean" p:startDelay="1000" p:cronExpression="0/3 * * * * ?"/>
+    <bean id="schedulerFactoryBean" class="org.springframework.scheduling.quartz.SchedulerFactoryBean">
+        <property name="triggers">
+            <list>
+                <ref bean="cronTrigger"/>
+            </list>
+        </property>
+    </bean>
+    -->
+
+    <!-- Model -->
+    <bean name="avi" class="com.anthonykim.datamgr.model.Avi" scope="prototype"/>
+    <bean name="bis" class="com.anthonykim.datamgr.model.Bis" scope="prototype"/>
+    <bean name="dsrc" class="com.anthonykim.datamgr.model.Dsrc" scope="prototype"/>
+    <bean name="mybiCard" class="com.anthonykim.datamgr.model.MybiCard" scope="prototype"/>
+</beans>
