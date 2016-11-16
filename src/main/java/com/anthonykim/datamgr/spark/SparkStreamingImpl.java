@@ -1,18 +1,19 @@
 package com.anthonykim.datamgr.spark;
 
 import com.anthonykim.datamgr.common.PropertiesUtil;
-
 import kafka.serializer.StringDecoder;
 import lombok.AllArgsConstructor;
 import lombok.NoArgsConstructor;
 import lombok.extern.log4j.Log4j;
-
 import org.apache.spark.SparkConf;
+import org.apache.spark.api.java.JavaPairRDD;
 import org.apache.spark.api.java.JavaSparkContext;
+import org.apache.spark.api.java.function.VoidFunction;
 import org.apache.spark.streaming.Duration;
 import org.apache.spark.streaming.api.java.JavaPairInputDStream;
 import org.apache.spark.streaming.api.java.JavaStreamingContext;
 import org.apache.spark.streaming.kafka.KafkaUtils;
+import scala.Tuple2;
 
 import java.util.*;
 
@@ -24,9 +25,10 @@ import java.util.*;
 @AllArgsConstructor
 @Deprecated
 public class SparkStreamingImpl implements SparkStreaming {
-    private String topicName;
+    private String topicNames;
     private Integer partitionAmount;
 
+    private static SparkConf sparkConf;
     private static JavaSparkContext sparkContext;
     private static JavaStreamingContext streamingContext;
     private static Map<String, String> kafkaParams;
@@ -36,9 +38,9 @@ public class SparkStreamingImpl implements SparkStreaming {
         if (sparkProps == null)
             sparkProps = PropertiesUtil.getDefaultProperties("META-INF/properties/default-spark-config.properties");
 
-        SparkConf sparkConf = new SparkConf().setAppName("datamgr-spark-streaming").setMaster(sparkProps.getProperty("spark.uri"));
+        sparkConf = new SparkConf().setAppName("spark-streaming").setMaster(sparkProps.getProperty("spark.uri"));
         sparkContext = new JavaSparkContext(sparkConf);
-        streamingContext = new JavaStreamingContext(sparkContext, new Duration(1000));
+        streamingContext = new JavaStreamingContext(sparkContext, new Duration(Long.parseLong(sparkProps.getProperty("stream.duration.ms"))));
 
         Properties kafkaProps = PropertiesUtil.getExternalProperties("conf/kafka-streaming.properties");
         if (kafkaProps == null)
@@ -49,14 +51,12 @@ public class SparkStreamingImpl implements SparkStreaming {
             kafkaParams.put((String) key, (String) kafkaProps.get(key));
     }
 
-    @Override
-    public void setTopicName(String topicName) {
-        this.topicName = topicName;
+    public void setTopicNames(String topicNames) {
+        this.topicNames = topicNames;
     }
 
-    @Override
-    public String getTopicName() {
-        return topicName;
+    public String getTopicNames() {
+        return topicNames;
     }
 
     @Override
@@ -71,13 +71,17 @@ public class SparkStreamingImpl implements SparkStreaming {
 
     @Override
     public void run() {
-        Set<String> topics = Collections.singleton(topicName);
+        Set<String> topicSet = new HashSet<>(Arrays.asList(topicNames.split("[,]")));
         JavaPairInputDStream<String, String> directKafkaStream = KafkaUtils.createDirectStream(streamingContext,
-                String.class, String.class, StringDecoder.class, StringDecoder.class, kafkaParams, topics);
+                String.class, String.class, StringDecoder.class, StringDecoder.class, kafkaParams, topicSet);
 
-        directKafkaStream.foreachRDD(rdd -> {
-            log.info("--- New RDD with " + rdd.partitions().size() + " partitions and " + rdd.count() + " records");
-            rdd.foreach(record -> log.info(record._2));
+        directKafkaStream.foreachRDD((VoidFunction<JavaPairRDD<String, String>>) stringStringJavaPairRDD -> {
+            System.out.println("--- New RDD with " + stringStringJavaPairRDD.partitions().size() + " partitions and " + stringStringJavaPairRDD.count() + " records");
+            stringStringJavaPairRDD.foreach((VoidFunction<Tuple2<String, String>>) stringStringTuple2 -> System.out.println(stringStringTuple2._1 + "\t:\t" + stringStringTuple2._2));
         });
+        directKafkaStream.print();
+
+        streamingContext.start();
+        streamingContext.awaitTermination();
     }
 }

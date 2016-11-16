@@ -5,9 +5,9 @@ package com.anthonykim.datamgr.spark;
  */
 @Deprecated
 public interface SparkStreaming extends Runnable {
-    void setTopicName(String topicName);
+    void setTopicNames(String topicNames);
 
-    String getTopicName();
+    String getTopicNames();
 
     void setPartitionAmount(Integer partitionAmount);
 

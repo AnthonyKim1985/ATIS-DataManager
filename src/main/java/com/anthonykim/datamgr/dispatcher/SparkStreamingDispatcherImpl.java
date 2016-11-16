@@ -53,7 +53,7 @@ public class SparkStreamingDispatcherImpl implements SparkStreamingDispatcher {
     private WeakReference<Thread> getNewSparkStreamingThread(String[] topicAndPartitionAmount) {
         SparkStreaming sparkStreaming = applicationContext.getBean(SparkStreaming.class);
 
-        sparkStreaming.setTopicName(topicAndPartitionAmount[PROPS_TOPIC_FIELD]);
+        sparkStreaming.setTopicNames(topicAndPartitionAmount[PROPS_TOPIC_FIELD]);
         sparkStreaming.setPartitionAmount(Integer.parseInt(topicAndPartitionAmount[PROPS_PARTITION_FIELD]));
 
         WeakReference<Thread> newSparkStreamingThread = new WeakReference<>(new Thread(sparkStreaming));
